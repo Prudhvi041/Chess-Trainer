@@ -3,7 +3,7 @@ import { cn } from '../lib/format';
 import { IconButton } from './ui/Button';
 import { ChartIcon, GridIcon, MoonIcon, MuteIcon, SunIcon, VolumeIcon } from './ui/icons';
 
-export type View = 'train' | 'learn';
+export type View = 'train' | 'learn' | 'play';
 
 interface Props {
   view: View;
@@ -29,7 +29,7 @@ export function Header({ view, onViewChange, theme, onToggleTheme, sound, onTogg
       </div>
       <ViewTabs view={view} onChange={onViewChange} />
       <nav className="flex items-center gap-0.5 sm:gap-1">
-        <IconButton label="Statistics" onClick={onOpenStats} className={view === 'learn' ? 'hidden sm:grid' : undefined}>
+        <IconButton label="Statistics" onClick={onOpenStats} className="hidden sm:grid">
           <ChartIcon />
         </IconButton>
         <IconButton label={sound ? 'Mute sounds' : 'Unmute sounds'} onClick={onToggleSound}>
@@ -47,13 +47,15 @@ function ViewTabs({ view, onChange }: { view: View; onChange: (v: View) => void 
   const tabs: { id: View; label: string; icon: React.ReactNode }[] = [
     { id: 'train', label: 'Train', icon: <GridIcon size={15} /> },
     { id: 'learn', label: 'Learn', icon: <span className="text-[15px] leading-none">♞</span> },
+    { id: 'play', label: 'Play', icon: <span className="text-[15px] leading-none">♚</span> },
   ];
+  const index = tabs.findIndex((t) => t.id === view);
   return (
-    <div role="tablist" aria-label="Section" className="relative grid grid-cols-2 rounded-2xl bg-ink-900/[0.06] p-1 dark:bg-white/[0.07]">
+    <div role="tablist" aria-label="Section" className="relative grid grid-cols-3 rounded-2xl bg-ink-900/[0.06] p-1 dark:bg-white/[0.07]">
       <span
         aria-hidden
-        className="absolute inset-y-1 left-1 w-[calc(50%-0.25rem)] rounded-xl bg-white shadow-sm ring-1 ring-black/5 transition-transform duration-300 ease-[cubic-bezier(.2,.9,.3,1)] dark:bg-ink-600 dark:ring-white/10"
-        style={{ transform: `translateX(${view === 'learn' ? 100 : 0}%)` }}
+        className="absolute inset-y-1 left-1 w-[calc((100%-0.5rem)/3)] rounded-xl bg-white shadow-sm ring-1 ring-black/5 transition-transform duration-300 ease-[cubic-bezier(.2,.9,.3,1)] dark:bg-ink-600 dark:ring-white/10"
+        style={{ transform: `translateX(${index * 100}%)` }}
       />
       {tabs.map((t) => (
         <button
@@ -62,12 +64,12 @@ function ViewTabs({ view, onChange }: { view: View; onChange: (v: View) => void 
           aria-selected={view === t.id}
           onClick={() => onChange(t.id)}
           className={cn(
-            'relative z-10 flex h-9 items-center justify-center gap-1.5 rounded-xl px-3 text-sm font-semibold transition-colors sm:px-5',
+            'relative z-10 flex h-9 items-center justify-center gap-1.5 rounded-xl px-2.5 text-sm font-semibold transition-colors sm:px-5',
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-400',
             view === t.id ? 'text-ink-900 dark:text-white' : 'text-ink-500 hover:text-ink-800 dark:text-ink-300 dark:hover:text-white',
           )}
         >
-          {t.icon}
+          <span className="hidden sm:inline">{t.icon}</span>
           {t.label}
         </button>
       ))}

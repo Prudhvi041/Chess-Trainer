@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Header, type View } from './components/Header';
 import { StatsModal } from './components/StatsModal';
 import { LearnView } from './features/learn/LearnView';
+import { PlayView, type PlayRoute } from './features/play/PlayView';
 import { TrainView } from './features/train/TrainView';
 import { DEFAULT_SETTINGS, type Settings } from './game/types';
 import { usePersistentState } from './hooks/usePersistentState';
@@ -10,23 +11,45 @@ import { useTheme } from './hooks/useTheme';
 import { findLesson } from './learn/curriculum';
 import { soundEngine, type SoundName } from './lib/sound';
 
-/* ── Hash routing: #train · #learn · #lesson-<id> (works on GitHub Pages and static hosts) ── */
+/*
+ * Hash routing (works on GitHub Pages and other static hosts):
+ * #train · #learn · #lesson-<id> · #play · #game · #review-<id> · #drills · #puzzles-<theme>
+ */
 
 interface Route {
   view: View;
   lesson: string | null;
+  play: PlayRoute;
 }
+
+const HOME: PlayRoute = { screen: 'home' };
 
 function parseHash(hash: string): Route {
   const h = hash.replace(/^#/, '');
   if (h.startsWith('lesson-')) {
     const id = h.slice('lesson-'.length);
-    if (findLesson(id)) return { view: 'learn', lesson: id };
+    if (findLesson(id)) return { view: 'learn', lesson: id, play: HOME };
   }
-  return { view: h === 'learn' ? 'learn' : 'train', lesson: null };
+  if (h === 'game') return { view: 'play', lesson: null, play: { screen: 'game' } };
+  if (h === 'drills') return { view: 'play', lesson: null, play: { screen: 'drills' } };
+  if (h.startsWith('review-')) return { view: 'play', lesson: null, play: { screen: 'review', id: h.slice(7) } };
+  if (h.startsWith('puzzles-')) return { view: 'play', lesson: null, play: { screen: 'puzzles', angle: h.slice(8) } };
+  if (h === 'play') return { view: 'play', lesson: null, play: HOME };
+  return { view: h === 'learn' ? 'learn' : 'train', lesson: null, play: HOME };
 }
 
-const toHash = (r: Route) => (r.lesson ? `#lesson-${r.lesson}` : `#${r.view}`);
+function toHash(r: Route): string {
+  if (r.view === 'learn') return r.lesson ? `#lesson-${r.lesson}` : '#learn';
+  if (r.view === 'play') {
+    const p = r.play;
+    if (p.screen === 'game') return '#game';
+    if (p.screen === 'drills') return '#drills';
+    if (p.screen === 'review') return `#review-${p.id}`;
+    if (p.screen === 'puzzles') return `#puzzles-${p.angle}`;
+    return '#play';
+  }
+  return '#train';
+}
 
 function useHashRoute() {
   const [route, setRoute] = useState<Route>(() => parseHash(window.location.hash));
@@ -60,7 +83,7 @@ export default function App() {
       <div className="relative">
         <Header
           view={route.view}
-          onViewChange={(view) => navigate({ view, lesson: null })}
+          onViewChange={(view) => navigate({ view, lesson: null, play: HOME })}
           theme={theme}
           onToggleTheme={toggleTheme}
           sound={settings.sound}
@@ -78,10 +101,17 @@ export default function App() {
               modalBlocked={statsOpen}
               onOpenStats={() => setStatsOpen(true)}
             />
-          ) : (
+          ) : route.view === 'learn' ? (
             <LearnView
               lessonId={route.lesson}
-              onOpenLesson={(lesson) => navigate({ view: 'learn', lesson })}
+              onOpenLesson={(lesson) => navigate({ view: 'learn', lesson, play: HOME })}
+              play={play}
+            />
+          ) : (
+            <PlayView
+              route={route.play}
+              navigate={(p) => navigate({ view: 'play', lesson: null, play: p })}
+              onOpenLesson={(lesson) => navigate({ view: 'learn', lesson, play: HOME })}
               play={play}
             />
           )}
@@ -90,7 +120,9 @@ export default function App() {
         <footer className="pb-8 text-center text-xs text-ink-400">
           {route.view === 'train'
             ? 'Train a few minutes a day: coordinates become instinct.'
-            : 'Learn a little, practice a lot.'}
+            : route.view === 'learn'
+              ? 'Learn a little, practice a lot.'
+              : 'Every game is a lesson when you review it.'}
         </footer>
       </div>
 

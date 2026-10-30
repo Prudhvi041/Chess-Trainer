@@ -1,11 +1,48 @@
 # ♞ Rank & File: Chess Trainer
 
-A premium web app with two sections:
+A premium, free web app with three sections:
 
 - **Learn**: an interactive beginner chess course (19 lessons, 4 units). Short explanations, then hands-on practice on a real board.
+- **Play**: play a built-in chess engine at 8 levels, get every game reviewed, and let the coach target your weak spots.
 - **Train**: a coordinate memory game. A square name appears (e.g. **E4**); click it. One miss ends the run.
 
-Built with **React 18 + TypeScript + Tailwind CSS + Vite**, with [chess.js](https://github.com/jhlywa/chess.js) for move rules.
+Built with **React 18 + TypeScript + Tailwind CSS + Vite**, with [chess.js](https://github.com/jhlywa/chess.js) for move rules. Everything runs in the browser: no server, no accounts, no cost.
+
+## Play: computer opponent and coach
+
+**The engine** (`src/engine/`) is written from scratch for this project (MIT): 0x88 move generation,
+alpha-beta search with quiescence, a transposition table, MVV-LVA/killer/history move ordering and a
+tapered piece-square evaluation. It runs in a Web Worker (~400k positions/second in a browser), so the
+board never freezes. Move generation is verified against the standard perft reference counts.
+
+| Level | Name | How it plays |
+|---|---|---|
+| 1–4 | Newcomer → Improver | Shallow search plus deliberate randomness and occasional blunders |
+| 5–6 | Club player, Strong | Real search, 4–6 plies |
+| 7–8 | Expert, Maximum | Full strength, 2.5–5 s per move |
+
+**Game review.** After a game, the engine analyses every position and grades each move
+(best · good · inaccuracy `?!` · mistake `?` · blunder `??`) using Lichess-style win-chance loss,
+and computes an accuracy score. You get an evaluation graph, the best move drawn on the board, the
+opponent's threat, and a plain-language explanation ("Your knight on g4 can be taken: Qxg4").
+
+**Weakness detection** tags each of your mistakes:
+
+| Theme | Detected when… |
+|---|---|
+| Leaving pieces hanging | the opponent's best reply wins a piece you left undefended |
+| Missing free material | the best move was a winning capture you didn't play |
+| Walking into / missing forks | the reply (or your best move) attacks two valuable pieces at once |
+| Allowing / missing checkmate | the engine sees a forced mate you allowed or missed |
+| Opening, endgame, middlegame | mistakes with no single tactical motif, by phase of the game |
+
+Plus opening-habit checks (early queen, knights on the rim, moving one piece repeatedly, not castling).
+
+**Coach dashboard.** Your recent games are combined into a ranked list of focus areas, each with a tip,
+a link to the matching Learn lesson, and targeted puzzles. **Fix my mistakes** replays positions
+from your own games with spaced repetition (1 → 3 → 7 → 21 days). **Puzzles** come live from the
+free [Lichess puzzle API](https://lichess.org/api) by theme and difficulty (Lichess puzzles are public
+domain, CC0); this part needs an internet connection.
 
 ## Learn: beginner course
 
@@ -68,6 +105,9 @@ src/
 │   ├── train/TrainView.tsx  # Coordinate game screen
 │   └── learn/               # CourseHome, LessonPlayer, StepRunner, useLessonStep (exercise engine),
 │                            # useLearnProgress, PromotionPicker, RichText
+├── engine/                  # Chess engine: position, evaluate, search, levels, analyze, worker, client
+├── coach/                   # review (move grading + themes), profile, storage, themes, lichess
+├── features/play/           # PlayHome, GameScreen, ReviewScreen, EvalGraph, MoveList, DrillScreen, PuzzleScreen
 ├── learn/
 │   ├── curriculum.ts        # All lessons as data
 │   ├── types.ts             # Step / Lesson / Unit model
@@ -97,7 +137,7 @@ src/
 │   ├── SettingsPanel.tsx, BadgeShelf.tsx, BadgeMedal.tsx, QuickStats.tsx, StatGrid.tsx
 │   ├── GameOverModal.tsx, StatsModal.tsx, ToastStack.tsx, Header.tsx
 │   └── ui/                  # Button, Card, Modal, SegmentedControl, Toggle, icons
-└── __tests__/               # coords, reducer and full-curriculum tests
+└── __tests__/               # coords, reducer, curriculum, engine perft + tactics, coach review, lichess parsing
 ```
 
 ### Design notes

@@ -836,9 +836,9 @@ const mates: Lesson = {
       kind: 'move',
       title: 'Climb the ladder',
       text: 'Checkmate in **two moves**. Start with a check on the 7th rank.',
-      fen: '8/3k4/R7/8/8/8/8/1R5K w - - 0 1',
+      fen: '8/4k3/R7/8/8/8/8/1R5K w - - 0 1',
       solution: [
-        { accept: ['b1b7'], reply: 'd7e8' },
+        { accept: ['b1b7'], reply: 'e7e8' },
         { accept: 'mate', prompt: 'The king retreated to the back rank. Now **finish it**!' },
       ],
       hint: 'The rook on a6 guards the 6th rank. Check from b7, then mate on the 8th rank.',

@@ -8,6 +8,19 @@ import { BoardFrame } from '../BoardFrame';
 import { Piece } from './pieces';
 
 export type SquareMark = 'picked' | 'correct' | 'wrong' | 'missed';
+export type ArrowTone = 'green' | 'blue' | 'red' | 'gold';
+export interface ToneArrow {
+  from: string;
+  to: string;
+  tone: ArrowTone;
+}
+
+const ARROW_COLORS: Record<ArrowTone, string> = {
+  green: 'rgba(22,128,74,0.8)',
+  blue: 'rgba(37,99,235,0.75)',
+  red: 'rgba(225,29,72,0.75)',
+  gold: 'rgba(190,145,42,0.85)',
+};
 
 export interface ChessBoardProps {
   pieces: PieceMap;
@@ -15,6 +28,8 @@ export interface ChessBoardProps {
   interactive?: boolean;
   highlights?: readonly string[];
   arrows?: readonly Arrow[];
+  /** Extra colored arrows (review: best move / played move / hint). */
+  toneArrows?: readonly ToneArrow[];
   stars?: readonly string[];
   lastMove?: Arrow | null;
   checkSquare?: string | null;
@@ -37,6 +52,7 @@ export function ChessBoard({
   interactive = false,
   highlights = [],
   arrows = [],
+  toneArrows = [],
   stars = [],
   lastMove = null,
   checkSquare = null,
@@ -221,7 +237,10 @@ export function ChessBoard({
             </button>
           );
         })}
-        <ArrowLayer arrows={arrows} flip={flip} />
+        <ArrowLayer
+          arrows={[...arrows.map(([from, to]) => ({ from, to, tone: 'green' as const })), ...toneArrows]}
+          flip={flip}
+        />
       </div>
       {overlay}
 
@@ -283,7 +302,7 @@ function Star({ small }: { small?: boolean }) {
   );
 }
 
-function ArrowLayer({ arrows, flip }: { arrows: readonly Arrow[]; flip: boolean }) {
+function ArrowLayer({ arrows, flip }: { arrows: readonly ToneArrow[]; flip: boolean }) {
   if (!arrows.length) return null;
   const center = (id: string) => {
     const sq = squareFromId(id)!;
@@ -291,31 +310,34 @@ function ArrowLayer({ arrows, flip }: { arrows: readonly Arrow[]; flip: boolean 
     const row = flip ? sq.rank : 7 - sq.rank;
     return { x: col + 0.5, y: row + 0.5 };
   };
+  const tones = [...new Set(arrows.map((a) => a.tone))];
   return (
-    <svg aria-hidden viewBox="0 0 8 8" className="pointer-events-none absolute inset-0 h-full w-full">
+    <svg aria-hidden viewBox="0 0 8 8" className="pointer-events-none absolute inset-0 z-20 h-full w-full">
       <defs>
-        <marker id="arrowhead" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="3.2" markerHeight="3.2" orient="auto">
-          <path d="M0 0L10 5L0 10z" fill="rgba(22,128,74,0.85)" />
-        </marker>
+        {tones.map((tone) => (
+          <marker key={tone} id={`arrowhead-${tone}`} viewBox="0 0 10 10" refX="5" refY="5" markerWidth="3.2" markerHeight="3.2" orient="auto">
+            <path d="M0 0L10 5L0 10z" fill={ARROW_COLORS[tone]} />
+          </marker>
+        ))}
       </defs>
-      {arrows.map(([from, to]) => {
+      {arrows.map(({ from, to, tone }) => {
         const a = center(from);
         const b = center(to);
-        const len = Math.hypot(b.x - a.x, b.y - a.y);
+        const len = Math.hypot(b.x - a.x, b.y - a.y) || 1;
         const shorten = 0.42;
         const bx = b.x - ((b.x - a.x) / len) * shorten;
         const by = b.y - ((b.y - a.y) / len) * shorten;
         return (
           <line
-            key={`${from}${to}`}
+            key={`${from}${to}${tone}`}
             x1={a.x}
             y1={a.y}
             x2={bx}
             y2={by}
-            stroke="rgba(22,128,74,0.75)"
+            stroke={ARROW_COLORS[tone]}
             strokeWidth={0.17}
             strokeLinecap="round"
-            markerEnd="url(#arrowhead)"
+            markerEnd={`url(#arrowhead-${tone})`}
           />
         );
       })}
