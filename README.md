@@ -1,11 +1,40 @@
-# ♞ Rank & File — Chess Coordinate Trainer
+# ♞ Rank & File: Chess Trainer
 
-A premium, minimal web game that trains you to **instantly recognize chessboard coordinates**.
-A square name appears (e.g. **E4**) — click it on the board. One miss ends the run.
+A premium web app with two sections:
 
-Built with **React 18 + TypeScript + Tailwind CSS + Vite**.
+- **Learn**: an interactive beginner chess course (19 lessons, 4 units). Short explanations, then hands-on practice on a real board.
+- **Train**: a coordinate memory game. A square name appears (e.g. **E4**); click it. One miss ends the run.
 
-## Features
+Built with **React 18 + TypeScript + Tailwind CSS + Vite**, with [chess.js](https://github.com/jhlywa/chess.js) for move rules.
+
+## Learn: beginner course
+
+| Unit | Lessons |
+|---|---|
+| **1. The board** | Meet the chessboard · Setting up the pieces |
+| **2. How the pieces move** | Rook · Bishop · Queen · King · Knight · Pawn · Capturing |
+| **3. Special rules** | Check · Checkmate · Stalemate · Castling · En passant · Promotion |
+| **4. Basic strategy** | Piece values · Opening principles · Tactics: the fork · Basic checkmates |
+
+Every lesson mixes five step types:
+
+| Step | What the learner does |
+|---|---|
+| **Learn** | Reads a short explanation with highlighted squares and arrows on the board. |
+| **Find the square** | Clicks the right square(s), e.g. where the queen starts. |
+| **Mark the moves** | Marks every square a piece can reach, then checks: correct, wrong and missed squares are shown. |
+| **Collect the stars** | Moves a piece to collect stars; the app computes the fewest possible moves as a target. |
+| **Your move** | Finds the right move or sequence (with scripted opponent replies): checks, mates, castling, en passant, promotion, forks… Wrong moves get specific feedback (e.g. "That's stalemate!") and are taken back. |
+
+Pieces move by **click** or **drag-and-drop** (mouse and touch). Includes hints, reset, promotion picker, progress saved in `localStorage`, and shareable lesson links (`#lesson-castling`).
+
+Every exercise is verified automatically: `src/__tests__/curriculum.test.ts` loads each position, proves every star puzzle is solvable, and plays every solution and scripted reply through chess.js.
+
+### Adding a lesson
+
+Lessons are plain data in `src/learn/curriculum.ts` (types in `src/learn/types.ts`). Add a `Lesson` object to a unit and run `npm test`. The tests will tell you if a position or solution is wrong.
+
+## Train: coordinate game
 
 | | |
 |---|---|
@@ -34,7 +63,16 @@ npm run preview    # serve the production build
 
 ```
 src/
-├── App.tsx                  # Composition root: wires state, stats, sounds, modals
+├── App.tsx                  # Shell: header, hash routing (#train / #learn / #lesson-<id>), theme, sound
+├── features/
+│   ├── train/TrainView.tsx  # Coordinate game screen
+│   └── learn/               # CourseHome, LessonPlayer, StepRunner, useLessonStep (exercise engine),
+│                            # useLearnProgress, PromotionPicker, RichText
+├── learn/
+│   ├── curriculum.ts        # All lessons as data
+│   ├── types.ts             # Step / Lesson / Unit model
+│   ├── chess.ts             # chess.js helpers
+│   └── stars.ts             # BFS solver for star puzzles
 ├── game/
 │   ├── types.ts             # Settings, GameState, GameSummary
 │   └── reducer.ts           # Pure state machine (randomness/time passed in → testable)
@@ -52,12 +90,14 @@ src/
 │   ├── storage.ts           # Safe, namespaced localStorage
 │   └── format.ts
 ├── components/
+│   ├── chess/               # ChessBoard (click + drag, arrows, stars, marks) and original SVG piece set
+│   ├── BoardFrame.tsx       # Shared wooden frame with coordinates
 │   ├── Board.tsx / BoardSquare.tsx (memoized) / BoardOverlay.tsx
 │   ├── TargetDisplay.tsx, ScoreBoard.tsx
 │   ├── SettingsPanel.tsx, BadgeShelf.tsx, BadgeMedal.tsx, QuickStats.tsx, StatGrid.tsx
 │   ├── GameOverModal.tsx, StatsModal.tsx, ToastStack.tsx, Header.tsx
 │   └── ui/                  # Button, Card, Modal, SegmentedControl, Toggle, icons
-└── __tests__/               # coords + reducer tests
+└── __tests__/               # coords, reducer and full-curriculum tests
 ```
 
 ### Design notes
@@ -76,4 +116,4 @@ src/
 
 ## License
 
-MIT
+MIT. The chess piece artwork is original to this project and covered by the same license.

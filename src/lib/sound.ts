@@ -3,7 +3,7 @@
  * The AudioContext is created lazily on first use (after a user gesture).
  */
 
-export type SoundName = 'correct' | 'wrong' | 'badge' | 'start' | 'rotate';
+export type SoundName = 'correct' | 'wrong' | 'badge' | 'start' | 'rotate' | 'move' | 'capture';
 
 interface Note {
   freq: number;
@@ -34,6 +34,11 @@ const PATCHES: Record<SoundName, Note[]> = {
     { freq: 587.33, start: 0.08, duration: 0.14, type: 'sine', gain: 0.2 },
   ],
   rotate: [{ freq: 300, start: 0, duration: 0.3, type: 'sine', gain: 0.14, slideTo: 600 }],
+  move: [{ freq: 210, start: 0, duration: 0.07, type: 'triangle', gain: 0.3, slideTo: 120 }],
+  capture: [
+    { freq: 260, start: 0, duration: 0.06, type: 'square', gain: 0.1, slideTo: 140 },
+    { freq: 150, start: 0.04, duration: 0.1, type: 'triangle', gain: 0.3, slideTo: 90 },
+  ],
 };
 
 class SoundEngine {
