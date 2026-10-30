@@ -1,0 +1,44 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    @apply bg-ink-50 font-sans dark:bg-ink-950;
+  }
+  ::selection {
+    @apply bg-gold-300/50;
+  }
+}
+
+/* Countdown bar — duration is set per round via --timer-ms. */
+.timer-bar {
+  animation: drain var(--timer-ms, 3000ms) linear forwards;
+}
+@keyframes drain {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+  /* Keep the countdown honest even with reduced motion. */
+  .timer-bar {
+    animation-duration: var(--timer-ms, 3000ms) !important;
+  }
+}
